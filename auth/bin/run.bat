@@ -1,41 +1,44 @@
 @echo off
 setlocal enabledelayedexpansion
-title KERNEL_CALC_PRO_X64
-color 0b
+title KERNEL_CALC_SUPREME_V4.0
+color 0a
 
-:: Анимация загрузки
-echo [SYSTEM STARTUP]
-set "bar=####################"
-for /l %%i in (1,1,20) do (
-    cls
-    echo Loading: [!bar:~0,%%i!] %%i0%%
-    timeout /t 0 /nobreak >nul
-)
-
-:: Вызов диагностики
-echo [SYSTEM INFO]
-cscript //nologo bin\diagnostic.vbs
-echo ---------------------------------------
-
-:: Проверка лицензии
-if not exist "config\license.key" (
-    echo [ERROR] LICENSE NOT FOUND! 
-    echo Creating trial...
-    echo %RANDOM%-%RANDOM%-%RANDOM% > config\license.key
-    timeout /t 2
-)
+:init
+echo [CHECK] Загрузка компонентов...
+call bin\backup.bat > nul
+timeout /t 1 >nul
 
 :main
+cls
+echo  ___________________________________________
+echo ^|  TERMINAL CALC v4.0 (Enterprise Edition) ^|
+echo ^|  Commands: save [n], load, backup, exit   ^|
+echo ^|___________________________________________^|
 echo.
-set /p exp="CALC_CORE# "
-if "%exp%"=="exit" exit
+set /p input="USER@SYSTEM# "
 
-:: Считаем
-for /f "delims=" %%a in ('cscript //nologo bin\engine.vbs "%exp%"') do set res=%%a
+if "%input%"=="exit" exit
+if "%input%"=="backup" ( call bin\backup.bat & pause & goto main )
+if "%input%"=="load" (
+    for /f "delims=" %%a in ('cscript //nologo data\memory_engine.vbs read') do set mem=%%a
+    echo [MEMORY] Значение в стеке: !mem!
+    pause & goto main
+)
 
-:: Имитация «думания»
-echo [PROCESS] Calculating...
-timeout /t 1 >nul
-echo [RESULT] %exp% = %res%
-echo %DATE% %TIME% | %exp% = %res% >> logs\session.log
+:: Проверка на команду SAVE
+set cmd_check=%input:~0,4%
+if "%cmd_check%"=="save" (
+    set val_to_save=%input:~5%
+    cscript //nologo data\memory_engine.vbs save !val_to_save!
+    echo [SYSTEM] Записано в DATA\MEMORY.DB
+    pause & goto main
+)
+
+:: Обычное вычисление
+echo [COMPUTING...]
+for /f "delims=" %%a in ('cscript //nologo bin\advanced_math.vbs "%input%"') do set res=%%a
+
+echo [RESULT] --^> %res%
+echo %date% %time% : %input% = %res% >> logs\session.log
+pause
 goto main
